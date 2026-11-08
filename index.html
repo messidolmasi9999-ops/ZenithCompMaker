@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ZenithCompMaker</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#060a12;color:#eef3ff;font-family:system-ui,Segoe UI,Roboto,sans-serif}
+.wrap{max-width:900px;margin:0 auto;padding:18px}.panel{background:#0e1626;border:1px solid #1c2b44;border-radius:14px;padding:18px;margin-bottom:16px}
+h1{font-size:22px;margin:0}h1 b{color:#00f2fe}h2{font-size:15px;color:#7cebd0;margin:0 0 12px}.muted{color:#8294af;font-size:13px}
+input,select,button{font:inherit}input,select{width:100%;background:#09101d;border:1px solid #1f3352;padding:11px;color:#fff;border-radius:8px;margin:4px 0 10px}
+button,.btn{background:linear-gradient(90deg,#00f2fe,#4facfe);border:0;padding:12px 18px;border-radius:8px;font-weight:700;color:#000;cursor:pointer;text-decoration:none;display:inline-block}
+button:disabled{opacity:.4}.red{background:#ff3366;color:#fff}.sm{padding:5px 10px;font-size:12px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.bar{height:12px;background:#050912;border-radius:6px;overflow:hidden;margin:12px 0}.bar div{height:100%;width:0;background:linear-gradient(90deg,#00f2fe,#4facfe);transition:width .4s}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-top:10px}.stat{background:#080f1a;border:1px solid #192a42;border-radius:8px;padding:10px;text-align:center}.stat b{display:block;font-size:20px;color:#00f2fe}
+.login{max-width:380px;margin:8vh auto}.tabs{display:flex;margin-bottom:14px}.tab{flex:1;background:none;color:#8294af;border-bottom:2px solid transparent;border-radius:0}.tab.on{color:#00f2fe;border-color:#00f2fe}
+.err{background:#ff336622;color:#ff6b8a;padding:10px;border-radius:8px;margin-bottom:12px;font-size:14px}.contact{margin-top:16px;font-size:13px;color:#a0b2c6;text-align:center}.contact a{color:#00f2fe}
+table{width:100%;border-collapse:collapse}th,td{padding:8px;border-bottom:1px solid #1a2a42;text-align:left;font-size:13px}video{width:100%;border-radius:10px;background:#000;margin-bottom:10px}
+@media(max-width:600px){.row,.row3{grid-template-columns:1fr}}
+</style></head><body><div class="wrap">
+{% if view=='login' %}
+<div class="panel login"><h1 style="text-align:center"><b>Zenith</b>CompMaker</h1><p class="muted" style="text-align:center">Giriş yapmak zorunludur</p>
+{% if error %}<div class="err">{{error}}</div>{% endif %}
+<div class="tabs"><button class="tab on" onclick="tab(0)">Üye Girişi</button><button class="tab" onclick="tab(1)">Admin Bölgesi</button></div>
+<form id="t0" method="post" action="/login"><input name="username" placeholder="Kullanıcı Adı" required autocomplete="username"><input name="password" type="password" placeholder="Şifre" required autocomplete="current-password"><button style="width:100%">Giriş Yap</button></form>
+<form id="t1" method="post" action="/admin/login" style="display:none"><input name="admin_password" type="password" placeholder="Admin Şifresi" required><button style="width:100%">Admin Girişi</button></form>
+<div class="contact">Satın Almak İçin Telegram <a href="https://t.me/newraswx">@newraswx</a> &amp; <a href="https://t.me/nyroaepp">@nyroaepp</a></div></div>
+<script>function tab(i){document.querySelectorAll('.tab').forEach((t,k)=>t.classList.toggle('on',k==i));t0.style.display=i?'none':'';t1.style.display=i?'':'none'}</script>
+
+{% elif view=='admin' %}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><h1><b>Zenith</b>CompMaker · Admin</h1><a href="/logout" class="btn red sm">Çıkış</a></div>
+<div class="panel"><h2>Yeni Kullanıcı Oluştur</h2>
+<form method="post" action="/admin/action"><input type="hidden" name="action" value="create">
+<div class="row"><input name="username" placeholder="Kullanıcı adı" required><input name="password" placeholder="Şifre" required></div>
+<div class="row"><input name="devices" type="number" min="1" value="1" placeholder="Cihaz sayısı" required>
+<select name="duration"><option value="1d">1 Gün</option><option value="1w">1 Hafta</option><option value="1m">1 Ay</option><option value="3m">3 Ay</option><option value="unlimited">Sınırsız</option></select></div><button>+ Oluştur</button></form></div>
+<div class="panel" style="overflow-x:auto"><h2>Kullanıcılar</h2><table><tr><th>Kullanıcı</th><th>Cihaz</th><th>Bitiş</th><th>Durum</th><th></th></tr>
+{% for u in users %}<tr><td><b>{{u['username']}}</b></td><td>{{u['used']}}/{{u['max_devices']}}</td><td>{{u['expires'] or 'Sınırsız'}}</td>
+<td>{{'🔴 Süresi doldu' if expired(u) else ('🟢 Aktif' if u['active'] else '⛔ İptal')}}</td><td>
+{% for a,l,c in [('toggle','İptal / Aç',''),('reset','Cihaz Sıfırla',''),('delete','Sil','red')] %}
+<form method="post" action="/admin/action" style="display:inline"><input type="hidden" name="user_id" value="{{u['id']}}"><input type="hidden" name="action" value="{{a}}"><button class="sm {{c}}">{{l}}</button></form>{% endfor %}</td></tr>{% endfor %}</table></div>
+
+{% else %}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div><h1><b>Zenith</b>CompMaker</h1><div class="muted">{{user}}</div></div><a href="/logout" class="btn red sm">Çıkış</a></div>
+<div class="panel"><h2>İşlemci (GPU / CPU)</h2><select id="device"></select><div class="muted">RTX/T4'te CUDA + Tensor (fp16) otomatik kullanılır. Analiz sunucudaki GPU'da çalışır; telefon sadece yükler ve izler.</div></div>
+<div class="panel"><h2>Oyuncu</h2><label class="muted">Yüz fotoğrafı (en önemli kimlik kaynağı, 1-5 net foto)</label><input id="photos" type="file" accept="image/*" multiple>
+<div class="row"><input id="pname" placeholder="Oyuncu adı (destek)"><input id="pnum" type="number" min="1" max="99" placeholder="Forma numarası (destek)"></div></div>
+<div class="panel"><h2>Maç (15 GB'a kadar, MP4 önerilir)</h2><input id="video" type="file" accept="video/*,.mkv,.ts,.m2ts"><input id="url" placeholder="veya video linki yapıştır (hızlı çoklu bağlantı indirme)">
+<select id="mode"><option value="hizli">Hızlı</option><option value="dengeli" selected>Dengeli</option><option value="detayli">Detaylı (büyük model)</option><option value="maksimum">Maksimum doğruluk (en büyük model, GPU önerilir)</option></select>
+<button id="go" onclick="start()">Analizi Başlat</button> <button id="stop" class="red" style="display:none" onclick="stopJob()">İptal Et</button></div>
+<div class="panel" id="prog" style="display:none"><h2 id="phase">Hazırlanıyor</h2><div class="bar"><div id="b"></div></div><div class="muted" id="info"></div>
+<div class="stats" id="stats"></div></div>
+<div class="panel" id="res" style="display:none"><h2>Comp Hazır</h2><video id="vid" controls playsinline preload="metadata"></video><a id="dl" class="btn">⬇ MP4 İndir</a> <span class="muted" id="rinfo"></span></div>
+<script>
+const $=i=>document.getElementById(i),sleep=ms=>new Promise(r=>setTimeout(r,ms));let job=null,aborted=false;
+const fmt=s=>s==null?'—':(s>=3600?Math.floor(s/3600)+' sa ':'')+Math.floor(s%3600/60)+' dk '+Math.floor(s%60)+' sn';
+fetch('/api/devices').then(r=>r.json()).then(d=>{device.innerHTML='<option value="auto">Otomatik (en iyi GPU)</option>'+d.map(x=>`<option value="${x.id}">${x.label}</option>`).join('')});
+function fail(m){alert(m);$('go').disabled=false;$('stop').style.display='none'}
+async function start(){
+ const v=$('video').files[0],u=$('url').value.trim(),ph=$('photos').files;
+ if(!ph.length)return alert('En az 1 yüz fotoğrafı seç');if(!v&&!u)return alert('Maç videosu seç veya link yapıştır');
+ const fd=new FormData();[...ph].forEach(p=>fd.append('photos',p));
+ fd.append('name',pname.value);fd.append('number',pnum.value);fd.append('device',device.value);fd.append('mode',mode.value);fd.append('url',u);
+ fd.append('filename',v?v.name:'');fd.append('size',v?v.size:0);
+ $('go').disabled=true;$('stop').style.display='';$('prog').style.display='';$('res').style.display='none';aborted=false;
+ let j;try{j=await (await fetch('/api/job',{method:'POST',body:fd})).json()}catch(e){return fail('Sunucuya ulaşılamadı')}
+ if(j.error)return fail(j.error);job=j.id;
+ if(v){try{await upload(v,j.chunk)}catch(e){return aborted?0:fail(e.message)}}
+ poll();
+}
+async function upload(f,CH){
+ const n=Math.ceil(f.size/CH),t0=Date.now();let next=0,sent=0;$('phase').textContent='Video yükleniyor';
+ async function w(){while(next<n&&!aborted){const i=next++,bl=f.slice(i*CH,Math.min(f.size,(i+1)*CH));let ok=false;
+  for(let a=0;a<8&&!ok&&!aborted;a++){try{const r=await fetch(`/api/job/${job}/chunk/${i}`,{method:'PUT',body:bl});ok=r.ok;if(r.status==401)throw new Error('Oturum kapandı')}catch(e){if(e.message=='Oturum kapandı')throw e;await sleep(1000*(a+1))}}
+  if(!ok&&!aborted)throw new Error('Yükleme koptu, tekrar dene');sent+=bl.size;const sp=sent/((Date.now()-t0)/1000);
+  $('b').style.width=(sent/f.size*100)+'%';$('info').textContent=`${(sent/1e9).toFixed(2)} / ${(f.size/1e9).toFixed(2)} GB · ${(sp/1e6).toFixed(1)} MB/sn · kalan ${fmt((f.size-sent)/sp)}`}}
+ await Promise.all([w(),w(),w()]);if(aborted)return;
+ const r=await fetch(`/api/job/${job}/finish`,{method:'POST'});if(!r.ok)throw new Error((await r.json()).error||'Hata')}
+async function poll(){
+ while(!aborted){let d;try{d=await (await fetch('/api/job/'+job)).json()}catch(e){await sleep(2000);continue}
+  if(d.error&&!d.status){fail(d.error);return}
+  $('phase').textContent=d.phase||'';
+  if(d.status=='running'||d.status=='rendering'){$('b').style.width=d.progress+'%';
+   $('info').textContent=`%${d.progress} · Kare: ${(d.sampled_done||0).toLocaleString()} / ${(d.sampled_total||0).toLocaleString()} (maçta ~${(d.frames_total||0).toLocaleString()} kare) · ${d.speed||0} kare/sn · tahmini kalan ${fmt(d.eta)}`;
+   const l=d.live||{};$('stats').innerHTML=[['Pas',l.pass],['Şut',l.shot],['Dribling',l.dribble],['Top kontrol',l.touch],['Koşu sn',l.run_sec],['Ekranda sn',l.seen_sec]].map(x=>`<div class="stat"><b>${x[1]||0}</b>${x[0]}</div>`).join('')}
+  if(d.status=='done'){$('b').style.width='100%';$('res').style.display='';$('vid').src=d.dl;$('dl').href=d.dl+'?dl=1';$('rinfo').textContent=`${fmt(d.comp_seconds)} · ${d.segments} sahne`;fin();return}
+  if(d.status=='error'){fail(d.error||'Hata');return}
+  if(d.status=='cancelled'){$('phase').textContent='İptal edildi';fin();return}
+  await sleep(1000)}}
+function fin(){$('go').disabled=false;$('stop').style.display='none'}
+async function stopJob(){aborted=true;if(job)await fetch(`/api/job/${job}/cancel`,{method:'POST'});$('phase').textContent='İptal edildi';fin()}
+</script>
+{% endif %}
+</div></body></html>

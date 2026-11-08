@@ -1,0 +1,10 @@
+flask>=3.0
+waitress>=3.0
+requests>=2.31
+numpy
+opencv-python-headless
+torch
+ultralytics>=8.2
+insightface>=0.7.3
+onnxruntime-gpu
+easyocr
